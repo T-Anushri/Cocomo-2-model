@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COCOMO II Model</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color:  #a7a7a7;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            text-align: center;
+            color:  #333;
+        }
+
+        form {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #c6cdcf;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 12px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            background-color: #504B4A;
+            color: #fff;
+            padding: 10px 15px;
+            border:solid 2px;
+            border-radius: 4px;
+        }
+
+        button:hover {
+            color: #504B4A;
+            background-color: #f0f0ef;
+            border-color: #504B4A;
+        }
+
+        .hidden{
+            display: none;
+        }
+
+        #result {
+            font-family: 'Space Grotesk', sans-serif;
+            margin-top: 20px;
+            padding: 10px;
+            max-width: 630px;
+            margin: 20px auto;
+            background-color:#f0f0ef;
+            border-radius: 4px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <h1>COCOMO II Model Calculator</h1>
+    
+    <form id="cocomoForm">
+        <label for="screens">Number of Screens:</label>
+        <input type="number" id="screens" required>
+
+        <label for="reports">Number of Reports:</label>
+        <input type="number" id="reports" required>
+
+        <label for="components">Number of Components:</label>
+        <input type="number" id="components" required>
+
+        <label for="complexity">Complexity Level (simple/medium/difficult):</label>
+        <select id="complexity" required>
+            <option value="simple">Simple</option>
+            <option value="medium">Medium</option>
+            <option value="difficult">Difficult</option>
+        </select>
+
+        <label for="reuse">Reuse type:</label>
+        <select id="reuseType" onchange="toggleReuseInput()" required>
+            <option value="percentage">Reuse in percentage</option>
+            <option value="number">Number of components reused</option>
+        </select>
+
+        <div id="percentageReuse" class="reuse-input hidden">
+            <label for="reusePercent">Reuse in percentage</label>
+            <input type="number" id="reusePercent" required>
+        </div>
+
+        <div id="numberReuse" class="reuse-input hidden">
+            <label for="reuseNumber">Number of components reused</label>
+            <input type="number" id="reuseNumber" required>
+        </div>
+
+        <label for="productivity">Developer/Environment Maturity Level:</label>
+        <select id="productivity" required>
+            <option value="verylow">Very Low</option>
+            <option value="low">Low</option>
+            <option value="nominal">Nominal</option>
+            <option value="high">High</option>
+            <option value="veryhigh">Very High</option>
+        </select>
+
+        <button type="button" onclick="calculateCocomo()">Calculate</button>
+    </form>
+
+    <div id="result"></div>
+
+    <script>
+        function toggleReuseInput() {
+            const reuseType = document.getElementById('reuseType').value;
+
+            // Hide all reuse input fields
+            document.getElementById('percentageReuse').classList.add('hidden');
+            document.getElementById('numberReuse').classList.add('hidden');
+
+            // Show the selected reuse input field
+            if (reuseType === 'percentage') {
+                document.getElementById('percentageReuse').classList.remove('hidden');
+            } else if (reuseType === 'number') {
+                document.getElementById('numberReuse').classList.remove('hidden');
+            }
+        }
+
+        function calculateCocomo() {
+            const screens = parseInt(document.getElementById('screens').value, 10);
+            const reports = parseInt(document.getElementById('reports').value, 10);
+            const components = parseInt(document.getElementById('components').value, 10);
+            const complexity = document.getElementById('complexity').value;
+            const reuseType=document.getElementById('reuseType').value;
+            const reusePercent=parseFloat(document.getElementById('reusePercent').value)
+            const reuseNumber=parseFloat(document.getElementById('reuseNumber').value)
+            const productivity = document.getElementById('productivity').value;
+
+            let s, r, c;
+
+            if (complexity === "simple") {
+                s = 1;
+                r = 2;
+                c = 10;
+            } else if (complexity === "medium") {
+                s = 2;
+                r = 5;
+                c = 10;
+            } else if (complexity === "difficult") {
+                s = 3;
+                r = 8;
+                c = 10;
+            }
+
+            let reusePercentCalculated;
+            switch (reuseType) {
+                case 'percentage':
+                    reusePercentCalculated = reusePercent;
+                    break;
+                 case 'number':
+                    reusePercentCalculated = 100 * reuseNumber / components;
+                    break;
+                 default:
+                    console.log('Invalid choice');
+                    return;
+            }
+
+            const objectPoints = screens * s + reports * r + components * c;
+            const newObjectPoints = Math.ceil(objectPoints * ((100 - reusePercentCalculated) / 100));
+
+            let prod;
+
+            if (productivity === "verylow") prod = 4;
+            else if (productivity === "low") prod = 7;
+            else if (productivity === "nominal") prod = 13;
+            else if (productivity === "high") prod = 25;
+            else if (productivity === "veryhigh") prod = 50;
+
+            const effort = Math.ceil(newObjectPoints / prod);
+            document.getElementById('result').innerHTML = '<p>Effort is ' + effort + ' person-months</p>';
+            
+        }
+    </script>
+</body>
+</html>
